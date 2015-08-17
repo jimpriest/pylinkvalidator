@@ -82,8 +82,10 @@ WorkerInit = namedtuple("WorkerInit", ["worker_config", "input_queue",
                         "output_queue", "logger"])
 
 
-WorkerConfig = namedtuple("WorkerConfig", ["username", "password", "types",
-                          "timeout", "parser", "strict_mode"])
+WorkerConfig = namedtuple(
+    "WorkerConfig",
+    ["username", "password", "types", "timeout", "parser", "strict_mode",
+     "prefer_server_encoding", "extra_headers"])
 
 
 WorkerInput = namedtuple("WorkerInput", ["url_split", "should_crawl", "depth"])
@@ -212,7 +214,6 @@ class Config(UTF8Class):
 
         if self.options.run_once:
             self.options.depth = 0
-        print(self.options.depth)
 
     def _build_worker_config(self, options):
         types = options.types.split(',')
@@ -221,9 +222,17 @@ class Config(UTF8Class):
                 raise ValueError("This type is not supported: {0}"
                                  .format(element_type))
 
-        return WorkerConfig(options.username, options.password, types,
-                            options.timeout, options.parser,
-                            options.strict_mode)
+        headers = {}
+        if options.headers:
+            for item in options.headers:
+                split = item.split(":")
+                if len(split) == 2:
+                    headers[split[0]] = split[1]
+
+        return WorkerConfig(
+            options.username, options.password, types, options.timeout,
+            options.parser, options.strict_mode,
+            options.prefer_server_encoding, headers)
 
     def _build_accepted_hosts(self, options, start_urls):
         hosts = set()
@@ -278,6 +287,11 @@ class Config(UTF8Class):
             "-p", "--password", dest="password",
             action="store", default=None,
             help="password to use with basic HTTP authentication")
+        crawler_group.add_option(
+            "-D", "--header",
+            dest="headers",  action="append", metavar="HEADER",
+            help="custom header of the form Header: Value "
+            "(repeat for multiple headers)")
         # crawler_group.add_option("-U", "--unique", dest="unique",
         #         action="store_true", default=False)
         crawler_group.add_option(
@@ -305,6 +319,10 @@ class Config(UTF8Class):
             "-d", "--depth", dest="depth",
             type="int", action="store", default=-1,
             help="Maximum crawl depth")
+        crawler_group.add_option(
+            "-e", "--prefer-server-encoding", dest="prefer_server_encoding",
+            action="store_true", default=False,
+            help="Prefer server encoding if specified. Else detect encoding")
         # TODO Add follow redirect option.
 
         parser.add_option_group(crawler_group)
