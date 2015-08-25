@@ -5,22 +5,21 @@ from __future__ import unicode_literals, absolute_import, print_function
 
 import codecs
 import re
+import csv
 import smtplib
 import sys
+import os
 
 from email.mime.text import MIMEText
 
 from pylinkvalidator.compat import StringIO
 from pylinkvalidator.models import (
-    REPORT_TYPE_ERRORS, REPORT_TYPE_ALL, FORMAT_PLAIN)
+    REPORT_TYPE_ERRORS, REPORT_TYPE_ALL, FORMAT_PLAIN, FORMAT_CSV)
 
 
 PLAIN_TEXT = "text/plain"
 HTML = "text/html"
-
 WHITESPACES = re.compile(r"\s+")
-
-
 EMAIL_HEADER = "from: {0}\r\nsubject: {1}\r\nto: {2}\r\nmime-version: 1.0\r\n"\
                "content-type: {3}\r\n\r\n{4}"
 
@@ -32,7 +31,6 @@ def close_quietly(a_file):
             a_file.close()
     except Exception:
         pass
-
 
 def report(site, config, total_time, logger=None):
     """Prints reports to console, file, and email."""
@@ -54,6 +52,8 @@ def report(site, config, total_time, logger=None):
     try:
         if config.options.format == FORMAT_PLAIN:
             _write_plain_text_report(site, config, output_files, total_time)
+        if config.options.format == FORMAT_CSV:
+            _write_csv_text_report(site, config, output_files, total_time)
     except Exception:
         if logger:
             logger.exception("An exception occurred while writing the report")
@@ -71,6 +71,7 @@ def _write_plain_text_report(site, config, output_files, total_time):
 
     total_urls = len(site.pages)
     total_errors = len(site.error_pages)
+    rundepth = config.options.depth
 
     if not site.is_ok:
         global_status = "ERROR"
@@ -92,7 +93,7 @@ def _write_plain_text_report(site, config, output_files, total_time):
 
     if pages:
         oprint("\n  Start URL(s): {0}".format(start_urls), files=output_files)
-
+        oprint("  Depth: {0}".format(rundepth), files=output_files)
         for page in pages.values():
             oprint("\n  {0}: {1}".format(
                 page.get_status_message(), page.url_split.geturl()),
@@ -105,6 +106,47 @@ def _write_plain_text_report(site, config, output_files, total_time):
                         truncate(source.origin_str)), files=output_files)
 
 
+def _write_csv_text_report(site, config, output_files, total_time):
+    start_urls = ",".join((start_url_split.geturl() for start_url_split in
+                           site.start_url_splits))
+    
+    total_urls = len(site.pages)
+    total_errors = len(site.error_pages)
+    depth = config.options.depth
+    filename = os.path.splitext(os.path.basename(config.options.output))[0]
+
+    if not site.is_ok:
+        global_status = "ERROR"
+        error_summary = "with {0} error(s) ".format(total_errors)
+    else:
+        global_status = "SUCCESS"
+        error_summary = ""
+
+    oprint("\n{0} Crawled {1} urls {2}in {3:.2f} seconds".format(
+        global_status, total_urls, error_summary, total_time),
+        files=output_files)
+
+    pages = {}
+
+    if config.options.report_type == REPORT_TYPE_ERRORS:
+        pages = site.error_pages
+    elif config.options.report_type == REPORT_TYPE_ALL:
+        pages = site.pages
+
+    if pages:
+        oprint("Start URL(s): {0}".format(start_urls), files=output_files)
+        oprint("Depth: {0}".format(depth), files=output_files)
+
+        # f  = open('/home/jpriest/wwwroot/pylinkvalidator/pylinkvalidator/bin/{0}.csv'.format(filename), "wb")
+        f  = open('{0}.csv'.format(filename), "wb")
+        writer = csv.writer(f)
+        writer.writerow( ('Status', 'Page', 'Parent Page', 'Code') )
+        for page in pages.values():
+            writer.writerow( (page.get_status_message(), page.url_split.geturl(), '', page.get_status_code()) )
+            for source in page.sources:
+                writer.writerow(('', '', source.origin.geturl(), page.get_status_code()))
+        f.close()
+        
 def oprint(message, files):
     """Prints to a sequence of files."""
     for file in files:

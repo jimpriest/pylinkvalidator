@@ -51,6 +51,7 @@ PARSER_HTML5 = "html5lib"
 
 
 FORMAT_PLAIN = "plain"
+FORMAT_CSV = "csv"
 FORMAT_HTML = "html"
 FORMAT_JSON = "json"
 
@@ -62,6 +63,7 @@ WHEN_ON_ERROR = "error"
 REPORT_TYPE_ERRORS = "errors"
 REPORT_TYPE_SUMMARY = "summary"
 REPORT_TYPE_ALL = "all"
+
 
 
 VERBOSE_QUIET = "0"
@@ -354,8 +356,8 @@ class Config(UTF8Class):
 
         output_group.add_option(
             "-f", "--format", dest="format", action="store",
-            default=FORMAT_PLAIN, choices=[FORMAT_PLAIN],
-            help="Format of the report: plain")
+            default=FORMAT_PLAIN, choices=[FORMAT_PLAIN, FORMAT_CSV],
+            help="Format of the report: plain (plain text) or csv (comma delimited file)")
         output_group.add_option(
             "-o", "--output", dest="output", action="store",
             default=None,
@@ -471,6 +473,23 @@ class SitePage(UTF8Class):
                 self.exception.type_name, self.exception.message)
         else:
             return "error"
+
+    def get_status_code(self):
+        if self.status:
+            if self.status < 400:
+                return "{0}".format(self.status)
+            elif self.status == 404:
+                return "404"
+            else:
+                return "{0}".format(self.status)
+        elif self.is_timeout:
+            return "timeout"
+        elif self.exception:
+            return "error ({0}): {1}".format(
+                self.exception.type_name, self.exception.message)
+        else:
+            return "error"
+
 
     def __unicode__(self):
         return "Resource {0} - {1}".format(
