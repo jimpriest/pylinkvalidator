@@ -16,7 +16,6 @@ from pylinkvalidator.compat import StringIO
 from pylinkvalidator.models import (
     REPORT_TYPE_ERRORS, REPORT_TYPE_ALL, FORMAT_PLAIN, FORMAT_CSV)
 
-
 PLAIN_TEXT = "text/plain"
 HTML = "text/html"
 WHITESPACES = re.compile(r"\s+")
@@ -114,6 +113,7 @@ def _write_csv_text_report(site, config, output_files, total_time):
     total_errors = len(site.error_pages)
     depth = config.options.depth
     filename = os.path.splitext(os.path.basename(config.options.output))[0]
+    filepath = os.path.dirname(config.options.output)
 
     if not site.is_ok:
         global_status = "ERROR"
@@ -137,8 +137,7 @@ def _write_csv_text_report(site, config, output_files, total_time):
         oprint("Start URL(s): {0}".format(start_urls), files=output_files)
         oprint("Depth: {0}".format(depth), files=output_files)
 
-        # f  = open('/home/jpriest/wwwroot/pylinkvalidator/pylinkvalidator/bin/{0}.csv'.format(filename), "wb")
-        f  = open('{0}.csv'.format(filename), "wb")
+        f  = open('{0}/{1}.csv'.format(filepath,filename), "wb")
         writer = csv.writer(f)
         writer.writerow( ('Status', 'Page', 'Parent Page', 'Code') )
         for page in pages.values():
