@@ -12,7 +12,7 @@ from collections import namedtuple
 from optparse import OptionParser, OptionGroup
 
 from pylinkvalidator.compat import get_safe_str
-from pylinkvalidator.urlutil import get_clean_url_split
+from pylinkvalidator.urlutil import get_clean_url_split, re
 
 
 DEFAULT_TYPES = ['a', 'img', 'script', 'link']
@@ -148,6 +148,7 @@ class Config(UTF8Class):
         self.worker_config = None
         self.accepted_hosts = []
         self.ignored_prefixes = []
+        self.excluded_urls = []
         self.worker_size = 0
 
     def should_crawl(self, url_split, depth):
@@ -160,14 +161,20 @@ class Config(UTF8Class):
         return url_split.netloc in self.accepted_hosts
 
     def should_download(self, url_split):
-        """Returns True if the url does not start with an ignored prefix and if
-        it is local or outside links are allowed."""
+        """Returns True if the url does not start with 
+          * an ignored prefix
+          * it does not match excluded url regex
+          * if it is local or outside links are allowed."""
         local = self.is_local(url_split)
 
         if not self.options.test_outside and not local:
             return False
 
         url = url_split.geturl()
+
+        for exclude_url in self.excluded_urls:
+            if re.search(exclude_url, url):
+                return False
 
         for ignored_prefix in self.ignored_prefixes:
             if url.startswith(ignored_prefix):
@@ -206,6 +213,9 @@ class Config(UTF8Class):
 
         if self.options.ignored_prefixes:
             self.ignored_prefixes = self.options.ignored_prefixes.split(',')
+
+        if self.options.excluded_urls:
+            self.excluded_urls = self.options.excluded_urls.split(',')
 
         if self.options.workers:
             self.worker_size = self.options.workers
@@ -274,6 +284,11 @@ class Config(UTF8Class):
             dest="accepted_hosts",  action="store", default=None,
             help="comma-separated list of additional hosts to crawl (e.g., "
             "example.com,subdomain.another.com)")
+        crawler_group.add_option(
+            "-x", "--exclude", dest="excluded_urls",
+            action="store", default=None,
+            help="URLs matching the regular expression will be ignored"
+            "(e.g., /private/)")
         crawler_group.add_option(
             "-i", "--ignore", dest="ignored_prefixes",
             action="store", default=None,

@@ -102,6 +102,9 @@ usage examples.
       -H ACCEPTED_HOSTS, --accepted-hosts=ACCEPTED_HOSTS
                           Comma-separated list of additional hosts to crawl
                           (e.g., example.com,subdomain.another.com)
+      -x EXCLUDED_URLS, --exclude=EXCLUDED_URLS
+                          URLs matching the regular expression will be ignored
+                          (e.g., /private/ )
       -i IGNORED_PREFIXES, --ignore=IGNORED_PREFIXES
                           Comma-separated list of host/path prefixes to ignore
                           (e.g., www.example.com/ignore_this_and_after/)
