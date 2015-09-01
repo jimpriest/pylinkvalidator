@@ -34,12 +34,19 @@ def close_quietly(a_file):
 def report(site, config, total_time, logger=None):
     """Prints reports to console, file, and email."""
     output_files = []
+    csv_output_files = []
     output_file = None
+    csv_output_file = None
     email_file = None
 
     if config.options.output:
         output_file = codecs.open(config.options.output, "w", "utf-8")
         output_files.append(output_file)
+
+    if config.options.format == FORMAT_CSV:
+        csv_filename = config.options.output.replace('.txt', '.csv')
+        csv_output_file = codecs.open(csv_filename, "w", "utf-8")
+        csv_output_files.append(csv_output_file)
 
     if config.options.smtp:
         email_file = StringIO()
@@ -52,13 +59,16 @@ def report(site, config, total_time, logger=None):
         if config.options.format == FORMAT_PLAIN:
             _write_plain_text_report(site, config, output_files, total_time)
         if config.options.format == FORMAT_CSV:
-            _write_csv_text_report(site, config, output_files, total_time)
+            _write_csv_report(site, config, output_files, csv_output_files, total_time)
     except Exception:
         if logger:
             logger.exception("An exception occurred while writing the report")
 
     if output_file:
         close_quietly(output_file)
+
+    if csv_output_file:
+        close_quietly(csv_output_file)
 
     if email_file:
         send_email(email_file, site, config)
@@ -105,15 +115,13 @@ def _write_plain_text_report(site, config, output_files, total_time):
                         truncate(source.origin_str)), files=output_files)
 
 
-def _write_csv_text_report(site, config, output_files, total_time):
+def _write_csv_report(site, config, output_files, csv_output_files, total_time):
     start_urls = ",".join((start_url_split.geturl() for start_url_split in
                            site.start_url_splits))
     
     total_urls = len(site.pages)
     total_errors = len(site.error_pages)
     depth = config.options.depth
-    filename = os.path.splitext(os.path.basename(config.options.output))[0]
-    filepath = os.path.dirname(config.options.output)
 
     if not site.is_ok:
         global_status = "ERROR"
@@ -134,23 +142,28 @@ def _write_csv_text_report(site, config, output_files, total_time):
         pages = site.pages
 
     if pages:
+        # print summary info to txt
         oprint("Start URL(s): {0}".format(start_urls), files=output_files)
         oprint("Depth: {0}".format(depth), files=output_files)
 
-        f  = open('{0}/{1}.csv'.format(filepath,filename), "wb")
-        writer = csv.writer(f)
-        writer.writerow( ('Status', 'Page', 'Parent Page', 'Code') )
+        # print data to csv file
+        csv_writers = [csv.writer(csv_output_file) for csv_output_file in csv_output_files]
+        owriterow( ('Status', 'Page', 'Parent Page', 'Code'), writers=csv_writers )
+        
         for page in pages.values():
-            writer.writerow( (page.get_status_message(), page.url_split.geturl(), '', page.get_status_code()) )
+            owriterow( (page.get_status_message(), page.url_split.geturl(), '', page.get_status_code()) , writers=csv_writers )
             for source in page.sources:
-                writer.writerow(('', '', source.origin.geturl(), page.get_status_code()))
-        f.close()
+                owriterow(('', '', source.origin.geturl(), page.get_status_code()) , writers=csv_writers )
         
 def oprint(message, files):
     """Prints to a sequence of files."""
     for file in files:
         print(message, file=file)
 
+def owriterow(row, writers):
+    """Prints row to a csv file."""
+    for writer in writers:
+        writer.writerow(row) 
 
 def truncate(value, size=72):
     """Truncates a string if its length is higher than size."""
