@@ -331,6 +331,13 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(8, len(site.pages))
         self.assertEqual(0, len(site.error_pages))
 
+    def test_exclude(self):
+        site = self._run_crawler_plain(ThreadSiteCrawler, ["--exclude=/sub/"])
+
+        # exclude /sub/ directory = 4 pages linked on the index
+        self.assertEqual(4, len(site.pages))
+        self.assertEqual(0, len(site.error_pages))
+
     def test_depth_0(self):
         site = self._run_crawler_plain(
             ThreadSiteCrawler, ["--depth", "0"], "/depth/root.html")
