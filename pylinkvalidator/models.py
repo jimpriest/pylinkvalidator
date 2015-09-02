@@ -175,7 +175,7 @@ class Config(UTF8Class):
         url = url_split.geturl()
 
         for exclude_url in self.excluded_urls:
-            if re.search(exclude_url, url):
+            if exclude_url.search(url):
                 return False
 
         for ignored_prefix in self.ignored_prefixes:
@@ -217,7 +217,8 @@ class Config(UTF8Class):
             self.ignored_prefixes = self.options.ignored_prefixes.split(',')
 
         if self.options.excluded_urls:
-            self.excluded_urls = self.options.excluded_urls.split(',')
+            self.excluded_urls = [re.compile(pattern) for pattern in self.options.excluded_urls.split(',')]
+
 
         if self.options.workers:
             self.worker_size = self.options.workers
