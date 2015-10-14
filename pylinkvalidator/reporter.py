@@ -151,9 +151,9 @@ def _write_csv_report(site, config, output_files, csv_output_files, total_time):
         owriterow( ('Status', 'Page', 'Parent Page', 'Code'), writers=csv_writers )
         
         for page in pages.values():
-            owriterow( (page.get_status_message(), page.url_split.geturl(), '', page.get_status_code()) , writers=csv_writers )
+            # owriterow( (page.get_status_message(), page.url_split.geturl(), '', page.get_status_code()) , writers=csv_writers )
             for source in page.sources:
-                owriterow(('', '', source.origin.geturl(), page.get_status_code()) , writers=csv_writers )
+                owriterow((page.get_status_message(), page.url_split.geturl(), source.origin.geturl(), page.get_status_code()) , writers=csv_writers )
         
 def oprint(message, files):
     """Prints to a sequence of files."""
