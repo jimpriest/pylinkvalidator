@@ -129,6 +129,7 @@ usage examples.
                           Prefer server encoding if specified. Else detect
                           encoding
       -S, --show-source   Show source of links (html) in the report.
+      -j, --only          Only (just) follow page links that match the starting URL
 
     Performance Options:
       These options can impact the performance of the crawler.
