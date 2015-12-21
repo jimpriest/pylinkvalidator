@@ -379,6 +379,18 @@ class PageCrawler(object):
             element_links = html_soup.find_all(element_type)
             links.extend(self._get_links(
                 element_links, attribute, base_url_split, original_url_split))
+
+        if self.worker_config.only:
+            # filter links based on starting URL
+            filtered_links = []
+            for link in links:
+                for path in self.worker_config.match_urls:
+                    if link.url_split.path[:len(path)] == path:
+                        filtered_links.append(link)
+                        break
+                    print "filter: ", len(links), " reduced: ", len(filtered_links)
+                    links = filtered_links
+
         return links
 
     def _get_links(self, elements, attribute, base_url_split,
