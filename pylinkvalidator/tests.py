@@ -192,7 +192,7 @@ class CrawlerTest(unittest.TestCase):
             username=None, password=None, types=['a', 'img', 'link', 'script'],
             timeout=5, parser=PARSER_STDLIB,
             strict_mode=False, prefer_server_encoding=False,
-            extra_headers=[])
+            extra_headers=[], only=None, match_urls=None)
 
         worker_init = WorkerInit(
             worker_config=worker_config,
