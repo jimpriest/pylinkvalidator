@@ -1,4 +1,5 @@
 *.pyc
+.idea
 pylinkvalidator.egg-info/
 dist/
 build/
