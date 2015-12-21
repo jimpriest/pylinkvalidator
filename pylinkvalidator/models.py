@@ -87,7 +87,7 @@ WorkerInit = namedtuple("WorkerInit", ["worker_config", "input_queue",
 WorkerConfig = namedtuple(
     "WorkerConfig",
     ["username", "password", "types", "timeout", "parser", "strict_mode",
-     "prefer_server_encoding", "extra_headers"])
+     "prefer_server_encoding", "extra_headers", "only", "match_urls"])
 
 
 WorkerInput = namedtuple("WorkerInput", ["url_split", "should_crawl", "depth"])
@@ -209,6 +209,10 @@ class Config(UTF8Class):
         return options
 
     def _parse_config(self):
+        if self.options.only:
+            # --only implies we're only following <a> tags
+            self.options.types = 'a'
+
         self.worker_config = self._build_worker_config(self.options)
         self.accepted_hosts = self._build_accepted_hosts(
             self.options, self.start_urls)
@@ -242,10 +246,17 @@ class Config(UTF8Class):
                 if len(split) == 2:
                     headers[split[0]] = split[1]
 
+        # if --only, create a list of just the URL paths to match
+        match_urls = []
+        if options.only:
+            for url in self.start_urls:
+                o = get_clean_url_split(url)
+                match_urls.append(o.path)
+
         return WorkerConfig(
             options.username, options.password, types, options.timeout,
             options.parser, options.strict_mode,
-            options.prefer_server_encoding, headers)
+            options.prefer_server_encoding, headers, options.only, match_urls)
 
     def _build_accepted_hosts(self, options, start_urls):
         hosts = set()
@@ -398,6 +409,10 @@ class Config(UTF8Class):
             "-S", "--show-source", dest="show_source",
             action="store_true", default=False,
             help="Show source of links (html) in the report.")
+        crawler_group.add_option(
+            "-j", "--only", dest="only",
+            action="store_true", default=False,
+            help="Only follow page links that match the starting URL.")
 
         parser.add_option_group(output_group)
 
