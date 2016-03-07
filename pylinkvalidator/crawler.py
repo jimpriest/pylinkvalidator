@@ -9,6 +9,16 @@ import logging
 import sys
 import time
 
+
+# SSL hack - do not push to prod!!!!!!!!!!!!!
+import ssl
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+# SSL hack - do not push to prod!!!!!!!!!!!!!
+
+
+
 from pylinkvalidator.bs4 import BeautifulSoup
 
 import pylinkvalidator.compat as compat
@@ -570,7 +580,11 @@ def open_url(open_func, request_class, url, timeout, timeout_exception,
             for header, value in extra_headers.items():
                 request.add_header(header, value)
 
-        output_value = open_func(request, timeout=timeout)
+# SSL hack - do not push to prod!!!!!!!!!!!!!
+        output_value = open_func(request, timeout=timeout, context=ctx)
+# SSL hack - do not push to prod!!!!!!!!!!!!!
+
+
         final_url = output_value.geturl()
         code = output_value.getcode()
         response = Response(

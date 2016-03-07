@@ -474,10 +474,8 @@ class SitePage(UTF8Class):
     def __init__(self, url_split, status=200, is_timeout=False, exception=None,
                  is_html=True, is_local=True):
         self.url_split = url_split
-
         self.original_source = None
         self.sources = []
-
         self.type = type
         self.status = status
         self.is_timeout = is_timeout
@@ -492,9 +490,12 @@ class SitePage(UTF8Class):
     def get_status_message(self):
         if self.status:
             if self.status < 400:
-                return "ok ({0})".format(self.status)
+                if self.url_split.scheme == 'https':
+                    return "ok ({0})".format(self.status)
+                else:
+                    return "insecure ({0})".format(self.status)
             elif self.status == 404:
-                return "not found (404)"
+                return "not found (404 {0})".format(self.url_split.scheme)
             else:
                 return "error (status={0})".format(self.status)
         elif self.is_timeout:
