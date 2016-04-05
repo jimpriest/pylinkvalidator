@@ -14,9 +14,7 @@ from optparse import OptionParser, OptionGroup
 from pylinkvalidator.compat import get_safe_str
 from pylinkvalidator.urlutil import get_clean_url_split, re
 
-
 DEFAULT_TYPES = ['a', 'img', 'script', 'link']
-
 
 TYPE_ATTRIBUTES = {
     'a': 'href',
@@ -25,14 +23,11 @@ TYPE_ATTRIBUTES = {
     'link': 'href',
 }
 
-
 DEFAULT_TIMEOUT = 10
-
 
 MODE_THREAD = "thread"
 MODE_PROCESS = "process"
 MODE_GREEN = "green"
-
 
 DEFAULT_WORKERS = {
     MODE_THREAD: 1,
@@ -40,39 +35,28 @@ DEFAULT_WORKERS = {
     MODE_GREEN: 1000,
 }
 
-
 PARSER_STDLIB = "html.parser"
 PARSER_LXML = "lxml"
 PARSER_HTML5 = "html5lib"
-
-# TODO Add support for gumbo. Will require some refactoring of the parsing
-# logic.
-# PARSER_GUMBO = "gumbo"
-
 
 FORMAT_PLAIN = "plain"
 FORMAT_CSV = "csv"
 FORMAT_HTML = "html"
 FORMAT_JSON = "json"
 
-
 WHEN_ALWAYS = "always"
 WHEN_ON_ERROR = "error"
-
+WHEN_INSECURE = "insecure"
 
 REPORT_TYPE_ERRORS = "errors"
 REPORT_TYPE_SUMMARY = "summary"
 REPORT_TYPE_ALL = "all"
 
-
-
 VERBOSE_QUIET = "0"
 VERBOSE_NORMAL = "1"
 VERBOSE_INFO = "2"
 
-
 HTML_MIME_TYPE = "text/html"
-
 
 PAGE_QUEUED = '__PAGE_QUEUED__'
 PAGE_CRAWLED = '__PAGE_CRAWLED__'
@@ -391,7 +375,7 @@ class Config(UTF8Class):
             help="Path of the file where the report will be printed.")
         output_group.add_option(
             "-W", "--when", dest="when", action="store",
-            default=WHEN_ALWAYS, choices=[WHEN_ALWAYS, WHEN_ON_ERROR],
+            default=WHEN_ALWAYS, choices=[WHEN_ALWAYS, WHEN_ON_ERROR, WHEN_INSECURE],
             help="When to print the report. error (only if a "
             "crawling error occurs) or always (default)")
         output_group.add_option(
@@ -472,7 +456,7 @@ class SitePage(UTF8Class):
     """
 
     def __init__(self, url_split, status=200, is_timeout=False, exception=None,
-                 is_html=True, is_local=True):
+                 is_html=True, is_local=True, is_secure=True):
         self.url_split = url_split
         self.original_source = None
         self.sources = []
@@ -483,6 +467,7 @@ class SitePage(UTF8Class):
         self.is_html = is_html
         self.is_local = is_local
         self.is_ok = status and status < 400
+        self.is_secure = url_split.scheme == 'https'
 
     def add_sources(self, page_sources):
         self.sources.extend(page_sources)
@@ -493,9 +478,9 @@ class SitePage(UTF8Class):
                 if self.url_split.scheme == 'https':
                     return "ok ({0})".format(self.status)
                 else:
-                    return "insecure ({0})".format(self.status)
+                    return "insecure ({0})".format(self.is_secure)
             elif self.status == 404:
-                return "not found (404 {0})".format(self.url_split.scheme)
+                return "not found (404)"
             else:
                 return "error (status={0})".format(self.status)
         elif self.is_timeout:

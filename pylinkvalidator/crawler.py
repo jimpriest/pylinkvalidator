@@ -627,7 +627,7 @@ def execute_from_command_line():
 
         stop = time.time()
 
-        if not crawler.site.is_ok or config.options.when == WHEN_ALWAYS:
+        if not crawler.site.is_ok or config.options.when == WHEN_ALWAYS or config.options.when == WHEN_INSECURE:
             report(crawler.site, config, stop - start, logger)
 
         if not crawler.site.is_ok:
