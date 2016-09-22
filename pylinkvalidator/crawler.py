@@ -240,6 +240,7 @@ class PageCrawler(object):
         self.urlopen = get_url_open()
         self.request_class = get_url_request()
         self.logger = worker_init.logger
+
         if not self.logger:
             # Get a new one!
             self.logger = get_logger()
@@ -247,8 +248,8 @@ class PageCrawler(object):
         # We do this here to allow patching by gevent
         import socket
         self.timeout_exception = socket.timeout
-
         self.auth_header = None
+
 
         if self.worker_config.username and self.worker_config.password:
             base64string = unicode(
@@ -280,6 +281,7 @@ class PageCrawler(object):
         url_split_to_crawl = worker_input.url_split
 
         try:
+            time.sleep(self.worker_config.wait)
             response = open_url(
                 self.urlopen, self.request_class,
                 url_split_to_crawl.geturl(), self.worker_config.timeout,
@@ -375,6 +377,7 @@ class PageCrawler(object):
                     site_origin=worker_input.site_origin,
                     missing_content=missing_content,
                     erroneous_content=erroneous_content)
+
         except Exception as exc:
             exception = ExceptionStr(unicode(type(exc)), unicode(exc))
             page_crawl = PageCrawl(

@@ -432,6 +432,15 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(7, len(site.pages))
         self.assertEqual(1, len(site.error_pages))
 
+    def test_wait_1(self):
+        startCrawl = time.time()
+        site = self._run_crawler_plain(
+            ThreadSiteCrawler, ["--wait", "1"], "/depth/root.html")
+        endCrawl = time.time()
+        crawlTime = endCrawl - startCrawl
+        # with 1 second wait crawl time should be equal to or greater than # of pages crawled
+        self.assertTrue(crawlTime >= len(site.pages))
+
     def test_strict_mode(self):
         site = self._run_crawler_plain(ThreadSiteCrawler, ["--strict"])
 

@@ -43,7 +43,6 @@ def namedtuple_with_defaults(typename, field_names, default_values=[]):
 
 DEFAULT_TYPES = ['a', 'img', 'script', 'link']
 
-
 TYPE_ATTRIBUTES = {
     'a': 'href',
     'img': 'src',
@@ -51,21 +50,17 @@ TYPE_ATTRIBUTES = {
     'link': 'href',
 }
 
-
 DEFAULT_TIMEOUT = 10
-
 
 MODE_THREAD = "thread"
 MODE_PROCESS = "process"
 MODE_GREEN = "green"
-
 
 DEFAULT_WORKERS = {
     MODE_THREAD: 1,
     MODE_PROCESS: 1,
     MODE_GREEN: 1000,
 }
-
 
 PARSER_STDLIB = "html.parser"
 PARSER_LXML = "lxml"
@@ -80,23 +75,20 @@ FORMAT_PLAIN = "plain"
 FORMAT_HTML = "html"
 FORMAT_JSON = "json"
 
-
 WHEN_ALWAYS = "always"
 WHEN_ON_ERROR = "error"
-
 
 REPORT_TYPE_ERRORS = "errors"
 REPORT_TYPE_SUMMARY = "summary"
 REPORT_TYPE_ALL = "all"
 
-
 VERBOSE_QUIET = "0"
 VERBOSE_NORMAL = "1"
 VERBOSE_INFO = "2"
 
-
 HTML_MIME_TYPE = "text/html"
 
+DEFAULT_WAIT = 0
 
 PAGE_QUEUED = '__PAGE_QUEUED__'
 PAGE_CRAWLED = '__PAGE_CRAWLED__'
@@ -108,31 +100,25 @@ WorkerInit = namedtuple_with_defaults(
     "WorkerInit",
     ["worker_config", "input_queue", "output_queue", "logger"])
 
-
 WorkerConfig = namedtuple_with_defaults(
     "WorkerConfig",
     ["username", "password", "types", "timeout", "parser", "strict_mode",
-     "prefer_server_encoding", "extra_headers"])
-
+     "prefer_server_encoding", "extra_headers", "wait"])
 
 WorkerInput = namedtuple_with_defaults(
     "WorkerInput",
     ["url_split", "should_crawl", "depth", "site_origin", "content_check"])
 
-
 Response = namedtuple_with_defaults(
     "Response", ["content", "status", "exception", "original_url",
                  "final_url", "is_redirect", "is_timeout", "response_time"])
 
-
 ExceptionStr = namedtuple_with_defaults(
     "ExceptionStr", ["type_name", "message"])
-
 
 Link = namedtuple_with_defaults(
     "Link",
     ["type", "url_split", "original_url_split", "source_str"])
-
 
 PageCrawl = namedtuple_with_defaults(
     "PageCrawl", ["original_url_split", "final_url_split",
@@ -141,14 +127,11 @@ PageCrawl = namedtuple_with_defaults(
                   "process_time", "site_origin", "missing_content",
                   "erroneous_content"])
 
-
 PageStatus = namedtuple_with_defaults(
     "PageStatus", ["status", "sources"])
 
-
 PageSource = namedtuple_with_defaults(
     "PageSource", ["origin", "origin_str"])
-
 
 ContentCheck = namedtuple_with_defaults(
     "ContentCheck",
@@ -162,6 +145,7 @@ HTMLCheck = namedtuple_with_defaults(
 class UTF8Class(object):
     """Handles unicode string from __unicode__() in: __str__() and __repr__()
     """
+
     def __str__(self):
         return get_safe_str(self.__unicode__())
 
@@ -202,8 +186,8 @@ class Config(UTF8Class):
 
     def should_crawl(self, url_split, depth):
         """Returns True if url split is local AND depth is acceptable"""
-        return (self.options.depth < 0 or depth < self.options.depth) and\
-            self.is_local(url_split)
+        return (self.options.depth < 0 or depth < self.options.depth) and \
+               self.is_local(url_split)
 
     def is_local(self, url_split, site_origin=None):
         """Returns true if url split is in the accepted hosts. site_origin must
@@ -307,7 +291,7 @@ class Config(UTF8Class):
         return WorkerConfig(
             options.username, options.password, types, options.timeout,
             options.parser, options.strict_mode,
-            options.prefer_server_encoding, headers)
+            options.prefer_server_encoding, headers, options.wait)
 
     def _build_accepted_hosts(self, options, start_urls):
         if options.multi:
@@ -427,7 +411,7 @@ class Config(UTF8Class):
         if not prefix:
             index = content.find(",")
             prefix = get_clean_url_split(content[:index])
-            content = content[index+1:]
+            content = content[index + 1:]
 
         return (prefix, content)
 
@@ -454,14 +438,14 @@ class Config(UTF8Class):
             help="fetch resources from other domains without crawling them")
         crawler_group.add_option(
             "-H", "--accepted-hosts",
-            dest="accepted_hosts",  action="store", default=None,
+            dest="accepted_hosts", action="store", default=None,
             help="comma-separated list of additional hosts to crawl (e.g., "
-            "example.com,subdomain.another.com)")
+                 "example.com,subdomain.another.com)")
         crawler_group.add_option(
             "-i", "--ignore", dest="ignored_prefixes",
             action="store", default=None,
             help="comma-separated list of host/path prefixes to ignore "
-            "(e.g., www.example.com/ignore_this_and_after/)")
+                 "(e.g., www.example.com/ignore_this_and_after/)")
         crawler_group.add_option(
             "-u", "--username", dest="username",
             action="store", default=None,
@@ -476,9 +460,9 @@ class Config(UTF8Class):
             help="each argument is considered to be a different site")
         crawler_group.add_option(
             "-D", "--header",
-            dest="headers",  action="append", metavar="HEADER",
+            dest="headers", action="append", metavar="HEADER",
             help="custom header of the form Header: Value "
-            "(repeat for multiple headers)")
+                 "(repeat for multiple headers)")
         crawler_group.add_option(
             "--url-file-path", dest="url_file_path",
             action="store", default=None,
@@ -489,7 +473,7 @@ class Config(UTF8Class):
             "-t", "--types", dest="types", action="store",
             default=",".join(DEFAULT_TYPES),
             help="Comma-separated values of tags to look for when crawling"
-            "a site. Default (and supported types): a,img,link,script")
+                 "a site. Default (and supported types): a,img,link,script")
         crawler_group.add_option(
             "-T", "--timeout", dest="timeout",
             type="int", action="store", default=DEFAULT_TIMEOUT,
@@ -518,30 +502,30 @@ class Config(UTF8Class):
             "--check-presence", dest="content_presence",
             action="append",
             help="Check presence of raw or HTML content on all pages. e.g., "
-            "<tag attr1=\"val\">regex:content</tag>. "
-            "Content can be either regex:pattern or plain content")
+                 "<tag attr1=\"val\">regex:content</tag>. "
+                 "Content can be either regex:pattern or plain content")
         crawler_group.add_option(
             "--check-absence", dest="content_absence",
             action="append",
             help="Check absence of raw or HTML content on all pages. e.g., "
-            "<tag attr1=\"val\">regex:content</tag>. "
-            "Content can be either regex:pattern or plain content")
+                 "<tag attr1=\"val\">regex:content</tag>. "
+                 "Content can be either regex:pattern or plain content")
         crawler_group.add_option(
             "--check-presence-once", dest="content_presence_once",
             action="append",
             help="Check presence of raw or HTML content for one page: "
-            "path,content, e.g.,: "
-            "/path,<tag attr1=\"val\">regex:content</tag>. "
-            "Content can be either regex:pattern or plain content. "
-            "Path can be either relative or absolute with domain.")
+                 "path,content, e.g.,: "
+                 "/path,<tag attr1=\"val\">regex:content</tag>. "
+                 "Content can be either regex:pattern or plain content. "
+                 "Path can be either relative or absolute with domain.")
         crawler_group.add_option(
             "--check-absence-once", dest="content_absence_once",
             action="append",
             help="Check absence of raw or HTML content for one page: "
-            "path,content, e.g.,"
-            "path,<tag attr1=\"val\">regex:content</tag>. "
-            "Content can be either regex:pattern or plain content. "
-            "Path can be either relative or absolute with domain.")
+                 "path,content, e.g.,"
+                 "path,<tag attr1=\"val\">regex:content</tag>. "
+                 "Content can be either regex:pattern or plain content. "
+                 "Path can be either relative or absolute with domain.")
 
         # TODO Add follow redirect option.
 
@@ -565,6 +549,10 @@ class Config(UTF8Class):
             help="Types of HTML parse: html.parser (default), lxml, html5lib",
             default=PARSER_STDLIB, choices=[PARSER_STDLIB, PARSER_LXML,
                                             PARSER_HTML5])
+        perf_group.add_option(
+            "--wait", dest="wait", type="int", action="store", default=DEFAULT_WAIT,
+            help="Number of seconds to wait between each worker request: 0 (default). "
+                 "Combine with --workers to control concurrency. ")
 
         parser.add_option_group(perf_group)
 
@@ -584,18 +572,18 @@ class Config(UTF8Class):
             "-W", "--when", dest="when", action="store",
             default=WHEN_ALWAYS, choices=[WHEN_ALWAYS, WHEN_ON_ERROR],
             help="When to print the report. error (only if a "
-            "crawling error occurs) or always (default)")
+                 "crawling error occurs) or always (default)")
         output_group.add_option(
             "-E", "--report-type", dest="report_type",
             help="Type of report to print: errors (default, summary and "
-            "erroneous links), summary, all (summary and all links)",
+                 "erroneous links), summary, all (summary and all links)",
             action="store", default=REPORT_TYPE_ERRORS,
             choices=[REPORT_TYPE_ERRORS, REPORT_TYPE_SUMMARY, REPORT_TYPE_ALL])
         output_group.add_option(
             "-c", "--console", dest="console",
             action="store_true", default=False,
             help="Prints report to the console in addition to other output"
-            " options such as file or email.")
+                 " options such as file or email.")
         crawler_group.add_option(
             "-S", "--show-source", dest="show_source",
             action="store_true", default=False,
@@ -611,12 +599,12 @@ class Config(UTF8Class):
             "-a", "--address", dest="address", action="store",
             default=None,
             help="Comma-separated list of email addresses used to send a "
-            "report")
+                 "report")
         email_group.add_option(
             "--from", dest="from_address", action="store",
             default=None,
             help="Email address to use in the from field of the email "
-            "(optional)")
+                 "(optional)")
         email_group.add_option(
             "-s", "--smtp", dest="smtp", action="store",
             default=None,
@@ -673,8 +661,8 @@ class SitePage(UTF8Class):
         self.exception = exception
         self.is_html = is_html
         self.is_local = is_local
-        self.is_ok = status and status < 400 and not missing_content and\
-            not erroneous_content
+        self.is_ok = status and status < 400 and not missing_content and \
+                     not erroneous_content
         self.response_time = response_time
         self.process_time = process_time
         self.site_origin = site_origin
@@ -723,10 +711,10 @@ class SitePage(UTF8Class):
         """Gets missing and erroneous content
         """
         messages = [
-            "missing content: {0}".format(content) for content in
-            self.missing_content] + [
-            "erroneous content: {0}".format(content) for content in
-            self.erroneous_content]
+                       "missing content: {0}".format(content) for content in
+                       self.missing_content] + [
+                       "erroneous content: {0}".format(content) for content in
+                       self.erroneous_content]
 
         return messages
 
