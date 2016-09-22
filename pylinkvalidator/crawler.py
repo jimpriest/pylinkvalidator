@@ -281,7 +281,9 @@ class PageCrawler(object):
         url_split_to_crawl = worker_input.url_split
 
         try:
-            time.sleep(self.worker_config.wait)
+            if self.worker_config.wait > 0:
+                time.sleep(self.worker_config.wait)
+
             response = open_url(
                 self.urlopen, self.request_class,
                 url_split_to_crawl.geturl(), self.worker_config.timeout,
